@@ -1,5 +1,4 @@
 using Orleans.Configuration;
-using Orleans.Hosting;
 using ShoppingApp.Grains;
 using ShoppingApp.SiloHost;
 using ShoppingApp.SiloHost.MicrosoftSqlServer;
@@ -18,30 +17,25 @@ builder.UseOrleans((context, siloBuilder) =>
     }
     else
     {
-        var siloPort = 11111;
-        var gatewayPort = 30000;
+        const int siloPort = 11111;
+        const int gatewayPort = 30000;
         var hostName = Dns.GetHostName();
         var ipEntry = Dns.GetHostEntry(hostName);
         var endpointAddress = 
             ipEntry.AddressList.First(ip => ip.AddressFamily == AddressFamily.InterNetwork);
         
-        // Azure App Service hosting option.
-        if (!string.IsNullOrWhiteSpace(context.Configuration["WEBSITE_PRIVATE_IP"])
-            && !string.IsNullOrWhiteSpace(context.Configuration["WEBSITE_PRIVATE_IP"]))
-        {
-            endpointAddress = IPAddress.Parse(context.Configuration["WEBSITE_PRIVATE_IP"]);
-            var strPorts = context.Configuration["WEBSITE_PRIVATE_PORTS"].Split(',');
-            if (strPorts.Length < 2)
-            {
-                throw new Exception("Insufficient private ports configured.");
-            }
+        var azureSqlConnectionString = context.Configuration["AZURE_SQL_CONNECTION_STRING"];
+        var azureStorageConnectionString = context.Configuration["AZURE_STORAGE_CONNECTION_STRING"];
 
-            siloPort = int.Parse(strPorts[0]);
-            gatewayPort = int.Parse(strPorts[1]);
+        if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
+        {
+            throw new InvalidOperationException("The value of AZURE_STORAGE_CONNECTION_STRING is null or empty.");
         }
 
-        var azureSqlConnectionString = context.Configuration["AZURE_SQL_CONNECTION_STRING"];
-        var connectionString = context.Configuration["AZURE_STORAGE_CONNECTION_STRING"];
+        if (string.IsNullOrWhiteSpace(azureSqlConnectionString))
+        {
+            throw new InvalidOperationException("The value of AZURE_SQL_CONNECTION_STRING is null or empty.");
+        }
 
         var sqlDatabaseInitializer = new SqlDatabaseInitializer(azureSqlConnectionString);
         sqlDatabaseInitializer.Run();
@@ -67,14 +61,14 @@ builder.UseOrleans((context, siloBuilder) =>
                 options.ClusterId = "ShoppingApp";
                 options.ServiceId = "ShoppingAppService";
             })
-            .UseAzureStorageClustering(options => options.ConfigureTableServiceClient(connectionString))
+            .UseAzureStorageClustering(options => options.ConfigureTableServiceClient(azureStorageConnectionString))
             .AddAzureTableGrainStorage(PersistentStorageConfig.AzureStorageName,
-                options => options.ConfigureTableServiceClient(connectionString))
+                options => options.ConfigureTableServiceClient(azureStorageConnectionString))
             .AddAdoNetGrainStorage(PersistentStorageConfig.AzureSqlName, options =>
         {
             options.Invariant = "System.Data.SqlClient";
             options.ConnectionString = azureSqlConnectionString;
-            options.UseJsonFormat = true;
+            //options.UseJsonFormat = true;
         });
     }
 

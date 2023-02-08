@@ -1,15 +1,15 @@
-﻿using System.Reflection;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using ShoppingApp.Common;
 using ShoppingApp.WebUI.Services;
+using System.Reflection;
 using MudSeverity = MudBlazor.Severity;
 
 namespace ShoppingApp.WebUI.Shared;
 
 public partial class MainLayout
 {
-    const string PrefersDarkThemeKey = "prefers-dark-scheme";
+    private const string PrefersDarkThemeKey = "prefers-dark-scheme";
 
     public string AppVersion
     {
@@ -20,7 +20,7 @@ public partial class MainLayout
         }
     }
 
-    readonly MudTheme _theme = new()
+    private readonly MudTheme _theme = new()
     {
         Palette = new Palette()
         {
@@ -86,11 +86,11 @@ public partial class MainLayout
         }
     }
 
-    async Task OnToggledChangedAsync(bool value) =>
+    private async Task OnToggledChangedAsync(bool value) =>
         await LocalStorage.SetItemAsync(
             PrefersDarkThemeKey, (_isDarkTheme = value).ToString());
 
-    Task OnToastRequested((string Title, string Message) tuple) =>
+    private Task OnToastRequested((string Title, string Message) tuple) =>
         InvokeAsync(() =>
         {
             var (_, message) = tuple;
@@ -101,5 +101,5 @@ public partial class MainLayout
                 options => options.CloseAfterNavigation = true);
         });
 
-    void DrawerToggle() => _drawerOpen = !_drawerOpen;
+    private void DrawerToggle() => _drawerOpen = !_drawerOpen;
 }
