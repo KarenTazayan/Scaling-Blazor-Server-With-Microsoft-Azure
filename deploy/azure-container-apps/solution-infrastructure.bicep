@@ -22,20 +22,19 @@ var vnetName = 'vnet-${appNamePrefix}-${nameSuffix}'
 var revisionSuffix = 'v${replace(semVer, '.', '-')}'
 var appiName = 'appi-${appNamePrefix}-${nameSuffix}'
 var logName = 'log-${appNamePrefix}-${nameSuffix}'
+var shoppingAppCaeName = 'ctapenv-${appNamePrefix}-${nameSuffix}'
 
 // Microsoft Orleans Hosting
 var storageName = 'st${appNamePrefix}${nameSuffix}'
 var sqlName = 'sql-${appNamePrefix}-${nameSuffix}'
-var siloHostCtapName = 'ctap-${appNamePrefix}-${nameSuffix}'
-var siloHostCtapEnvName = 'ctapenv-${appNamePrefix}-${nameSuffix}'
+var siloHostCaName = 'ctap-${appNamePrefix}-${nameSuffix}'
 
 // Web UI Hosting
 var sigrName='sigr-${appNamePrefix}-${nameSuffix}'
 var keyVaultName = 'kv-${appNamePrefix}-${nameSuffix}'
 var webUiStorageName = 'stwebui${appNamePrefix}${nameSuffix}'
 var webUiStorageBlobContainerName = 'web-ui-data-protection'
-var webUiCtapName = 'ctap-${appNamePrefix}-ui-${nameSuffix}'
-var webUiCtapEnvName = 'ctapenv-${appNamePrefix}-ui-${nameSuffix}'
+var webUiCaName = 'ctap-${appNamePrefix}-ui-${nameSuffix}'
 
 var tags = {
   Purpose: 'Azure Workshop'
@@ -97,7 +96,7 @@ resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-0
     accessPolicies: [
       {
         tenantId: subscription().tenantId
-        objectId: webUiCtap.identity.principalId
+        objectId: webUiCa.identity.principalId
         permissions: {
           keys: [
             'get'
@@ -147,7 +146,7 @@ resource web 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
     // Contributor
     // https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')
-    principalId: webUiCtap.identity.principalId
+    principalId: webUiCa.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
@@ -178,7 +177,7 @@ resource appi 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: vnetName
   location: location
   tags: tags
@@ -190,15 +189,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
     }
     subnets: [
       {
-        name: 'SiloHost'
+        name: 'ShoppingApp'
         properties: {
-          addressPrefix: '10.0.0.0/23'
-        }
-      }
-      {
-        name: 'WebUI'
-        properties: {
-          addressPrefix: '10.0.2.0/23'
+          addressPrefix: '10.0.0.0/21'
         }
       }
     ]
@@ -208,9 +201,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 resource signalR 'Microsoft.SignalRService/signalR@2022-02-01' = {
   name: sigrName
   location: location
+
   sku: {
     capacity: 1
-    name: 'Free_F1'
+    name: 'Standard_S1'
+    tier: 'Standard'
   }
   kind: 'SignalR'
   properties: {
@@ -253,39 +248,25 @@ resource sqlShoppingAppMain 'Microsoft.Sql/servers/databases@2021-11-01' = {
   }
 }
 
-resource siloHostCtapEnv 'Microsoft.App/managedEnvironments@2022-03-01' = {
-  name: siloHostCtapEnvName
+resource shoppingAppCae 'Microsoft.App/managedEnvironments@2022-03-01' = {
+  name: shoppingAppCaeName
   location: location
   tags: tags
   properties: {
     vnetConfiguration: {
       infrastructureSubnetId: vnet.properties.subnets[0].id
-      runtimeSubnetId: vnet.properties.subnets[0].id
     }
     zoneRedundant: false
   }
 }
 
-resource webUiCtapEnv 'Microsoft.App/managedEnvironments@2022-03-01' = {
-  name: webUiCtapEnvName
-  location: location
-  tags: tags
-  properties: {
-    vnetConfiguration: {
-      infrastructureSubnetId: vnet.properties.subnets[1].id
-      runtimeSubnetId: vnet.properties.subnets[1].id
-    }
-    zoneRedundant: false
-  }
-}
-
-resource siloHostCtap 'Microsoft.App/containerApps@2022-03-01' = {
-  name: siloHostCtapName
+resource siloHostCa 'Microsoft.App/containerApps@2022-03-01' = {
+  name: siloHostCaName
   location: location
   properties: {
-    managedEnvironmentId: siloHostCtapEnv.id
+    managedEnvironmentId: shoppingAppCae.id
     configuration: {
-      activeRevisionsMode: 'multiple'
+      activeRevisionsMode: 'Single'
       secrets: [
         {
           name: 'acr-password'
@@ -334,16 +315,16 @@ resource siloHostCtap 'Microsoft.App/containerApps@2022-03-01' = {
   }
 }
 
-resource webUiCtap 'Microsoft.App/containerApps@2022-03-01' = {
-  name: webUiCtapName
+resource webUiCa 'Microsoft.App/containerApps@2022-03-01' = {
+  name: webUiCaName
   location: location
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    managedEnvironmentId: webUiCtapEnv.id
+    managedEnvironmentId: shoppingAppCae.id
     configuration: {
-      activeRevisionsMode: 'multiple'
+      activeRevisionsMode: 'Single'
       secrets: [
         {
           name: 'acr-password'
@@ -393,8 +374,8 @@ resource webUiCtap 'Microsoft.App/containerApps@2022-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
-        maxReplicas: 10
+        minReplicas: 2
+        maxReplicas: 4
       }
     }
   }
