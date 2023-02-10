@@ -22,10 +22,10 @@ stages:
       displayName: Whole solution build process
       steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET 6.0.402 sdk'
+        displayName: 'Use .NET 7.0.102 sdk'
         inputs:
           packageType: sdk
-          version: 6.0.402
+          version: 7.0.102
 
       - task: DotNetCoreCLI@2
         displayName: 'Build solution ShoppingApp.sln'
@@ -184,7 +184,7 @@ stages:
       azureServiceConnection: 'DefaultAzureServiceConnection'
       resourceGroupName: 'rg-shopping-app'
       location: 'francecentral'
-      templateFile: '$(Pipeline.Workspace)/infrastructure/advanced-deployment/solution-infrastructure-advanced.bicep'
+      templateFile: '$(Pipeline.Workspace)/infrastructure/solution-infrastructure.bicep'
       acrUrl: $[ stageDependencies.Provision_Azure_Container_Registry.Deploy_Azure_Container_Registry.outputs['t2.acrUrl'] ]
       acrLogin: $[ stageDependencies.Provision_Azure_Container_Registry.Deploy_Azure_Container_Registry.outputs['t2.acrLogin'] ]
       acrPassword: $[ stageDependencies.Provision_Azure_Container_Registry.Deploy_Azure_Container_Registry.outputs['t2.acrPassword'] ]

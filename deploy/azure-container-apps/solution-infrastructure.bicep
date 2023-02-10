@@ -266,7 +266,7 @@ resource siloHostCa 'Microsoft.App/containerApps@2022-03-01' = {
   properties: {
     managedEnvironmentId: shoppingAppCae.id
     configuration: {
-      activeRevisionsMode: 'Single'
+      activeRevisionsMode: 'Multiple'
       secrets: [
         {
           name: 'acr-password'
@@ -324,7 +324,7 @@ resource webUiCa 'Microsoft.App/containerApps@2022-03-01' = {
   properties: {
     managedEnvironmentId: shoppingAppCae.id
     configuration: {
-      activeRevisionsMode: 'Single'
+      activeRevisionsMode: 'Multiple'
       secrets: [
         {
           name: 'acr-password'
@@ -374,8 +374,8 @@ resource webUiCa 'Microsoft.App/containerApps@2022-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 2
-        maxReplicas: 4
+        minReplicas: 1
+        maxReplicas: 10
       }
     }
   }
