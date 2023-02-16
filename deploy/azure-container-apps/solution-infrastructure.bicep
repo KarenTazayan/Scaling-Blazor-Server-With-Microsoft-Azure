@@ -251,6 +251,9 @@ resource sqlShoppingAppMain 'Microsoft.Sql/servers/databases@2021-11-01' = {
 resource shoppingAppCae 'Microsoft.App/managedEnvironments@2022-10-01' = {
   name: shoppingAppCaeName
   location: location
+  sku: {
+    name: 'Consumption'
+  }
   tags: tags
   properties: {
     vnetConfiguration: {
@@ -292,7 +295,8 @@ resource siloHostCa 'Microsoft.App/containerApps@2022-10-01' = {
           image: '${acrUrl}/shoppingapp/silohost:${semVer}'
           name: 'silo-host'
           resources: {
-            cpu: 1
+            cpu: json('0.5')
+            memory: '1.0Gi'
           }
           env: [
             {
@@ -312,7 +316,7 @@ resource siloHostCa 'Microsoft.App/containerApps@2022-10-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 10
+        maxReplicas: 4
         rules: [
         ]
       }
@@ -329,7 +333,7 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
   properties: {
     managedEnvironmentId: shoppingAppCae.id
     configuration: {
-      activeRevisionsMode: 'Multiple'
+      activeRevisionsMode: 'Single'
       secrets: [
         {
           name: 'acr-password'
@@ -354,6 +358,10 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
         {
           image: '${acrUrl}/shoppingapp/webui:${semVer}'
           name: 'web-ui'
+          resources: {
+            cpu: json('0.75')
+            memory: '1.5Gi'
+          }
           env: [
             {
               name: 'AZURE_STORAGE_CONNECTION_STRING'
@@ -380,8 +388,16 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 20
+        maxReplicas: 8
         rules: [
+          {
+            name: 'http-requests'
+            http: {
+              metadata: {
+                concurrentRequests: '75'
+              }
+            }
+          }
         ]
       }
     }
