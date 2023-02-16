@@ -248,7 +248,7 @@ resource sqlShoppingAppMain 'Microsoft.Sql/servers/databases@2021-11-01' = {
   }
 }
 
-resource shoppingAppCae 'Microsoft.App/managedEnvironments@2022-03-01' = {
+resource shoppingAppCae 'Microsoft.App/managedEnvironments@2022-10-01' = {
   name: shoppingAppCaeName
   location: location
   tags: tags
@@ -260,7 +260,7 @@ resource shoppingAppCae 'Microsoft.App/managedEnvironments@2022-03-01' = {
   }
 }
 
-resource siloHostCa 'Microsoft.App/containerApps@2022-03-01' = {
+resource siloHostCa 'Microsoft.App/containerApps@2022-10-01' = {
   name: siloHostCaName
   location: location
   properties: {
@@ -291,6 +291,9 @@ resource siloHostCa 'Microsoft.App/containerApps@2022-03-01' = {
         {
           image: '${acrUrl}/shoppingapp/silohost:${semVer}'
           name: 'silo-host'
+          resources: {
+            cpu: 1
+          }
           env: [
             {
               name: 'AZURE_SQL_CONNECTION_STRING'
@@ -310,12 +313,14 @@ resource siloHostCa 'Microsoft.App/containerApps@2022-03-01' = {
       scale: {
         minReplicas: 1
         maxReplicas: 10
+        rules: [
+        ]
       }
     }
   }
 }
 
-resource webUiCa 'Microsoft.App/containerApps@2022-03-01' = {
+resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
   name: webUiCaName
   location: location
   identity: {
@@ -375,7 +380,9 @@ resource webUiCa 'Microsoft.App/containerApps@2022-03-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 10
+        maxReplicas: 20
+        rules: [
+        ]
       }
     }
   }
