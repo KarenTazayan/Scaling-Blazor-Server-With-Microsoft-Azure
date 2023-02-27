@@ -17,7 +17,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommend
 # Install the Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
-# Install the .NET SDK 6.0
+# Install the .NET SDK 7.0
 RUN apt-get install wget
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
